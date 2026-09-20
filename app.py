@@ -31,9 +31,7 @@ def twitter(username):
                 "message": "Could not get tweets"
             }), response.status_code
 
-        data = response.json()
-
-        return jsonify(data)
+        return jsonify(response.json())
 
     except Exception as e:
         return jsonify({
@@ -72,40 +70,27 @@ def bans():
 
         data = response.json()
 
+        lines = [
+            f"🔨 **CURRENT BANNED USERS:** `{len(data)}`",
+            ""
+        ]
+
         if not data:
-            formatted = (
-                "🔨 **CURRENT BANNED USERS:** `0`\n\n"
-                "No banned users."
-            )
+            lines.append("No banned users.")
 
         else:
-            lines = [
-                f"🔨 **CURRENT BANNED USERS:** `{len(data)}`",
-                ""
-            ]
-
             for ban in data:
                 user = ban.get("user", {})
-
-                username = user.get(
-                    "username",
-                    "Unknown"
-                )
-
-                user_id = user.get(
-                    "id",
-                    "Unknown"
-                )
+                username = user.get("username", "Unknown")
+                user_id = user.get("id", "Unknown")
 
                 # Actual Discord mention
                 lines.append(
                     f"<@{user_id}> — `{username}`"
                 )
 
-            formatted = "\n".join(lines)
-
         return jsonify({
-            "response": formatted,
+            "response": "\n".join(lines),
             "count": len(data)
         })
 
