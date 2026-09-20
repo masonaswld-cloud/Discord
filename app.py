@@ -4,7 +4,9 @@ import os
 
 app = Flask(__name__)
 
-DISCORD_BOT_TOKEN = os.environ.get("MTUxMTQ3ODQzNzE1NDUyNTE4NA.GorjVo.z6y6HqYZV7oMMBJYXEYGuj82uLJqIW25gMLbbc")
+DISCORD_BOT_TOKEN = os.environ.get("MTUxMTQ3ODQzNzE1NDUyNTE4NA.GzdoNW.31dqBkpp8NjvHGG-6ZDhdukO4C9RQBLDYsg-V8")
+                        
+            
 GUILD_ID = "1492690243906703511"
 
 
