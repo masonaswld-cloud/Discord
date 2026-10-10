@@ -1,13 +1,5 @@
-
 {
-  "name": "discord-updates-api",
-  "version": "1.0.0",
-  "description": "Discord Blog Updates API for BotGhost",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "express": "^5.1.0"
-  }
+  "title":  "Latest Discord Blog Post",
+  "description": "Another Discord Update, Go check it out"
+  "link": "https://discord.com/blog/example"
 }
