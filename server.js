@@ -1,48 +1,33 @@
-
 const express = require("express");
+const https = require("https");
 
 const app = express();
 const PORT = process.env.PORT || 10000;
-const FEED = "https://discord.com/blog/rss.xml";
 
 app.get("/", (req, res) => {
-  res.json({ status: "online", api: "Discord Updates API" });
-});
+  https.get("https://discord.com/blog/rss.xml", r => {
+    let xml = "";
+    r.on("data", d => xml += d);
+    r.on("end", () => {
+      const item = xml.match(/<item>([\s\S]*?)<\/item>/);
+      if (!item) return res.json({ title: "", link: "" });
 
-app.get("/discord-updates", async (req, res) => {
-  try {
-    const response = await fetch(FEED);
-    if (!response.ok) throw new Error("Discord RSS unavailable");
+      const get = tag => {
+        const m = item[1].match(
+          new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`)
+        );
+        return m ? m[1].replace(/<!\[CDATA\[|\]\]>/g, "").trim() : "";
+      };
 
-    const xml = await response.text();
-    const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)]
-      .slice(0, 10)
-      .map(([_, item]) => {
-        const get = (tag) => {
-          const match = item.match(
-            new RegExp(`<${tag}[^>]*>([\\\\s\\\\S]*?)<\\\\/${tag}>`, "i")
-          );
-          return match ? match[1]
-            .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
-            .replace(/<[^>]*>/g, "")
-            .replace(/&amp;/g, "&")
-            .replace(/&quot;/g, '"')
-            .replace(/&#39;|&apos;/g, "'")
-            .replace(/&lt;/g, "<")
-            .replace(/&gt;/g, ">").trim() : "";
-        };
-        return {
-          title: get("title"),
-          link: get("link"),
-          description: get("description"),
-          pubDate: get("pubDate")
-        };
+      res.json({
+        title: get("title"),
+        link: get("link")
       });
-
-    res.json({ status: "ok", count: items.length, items });
-  } catch (error) {
-    res.status(502).json({ status: "error", message: error.message });
-  }
+    });
+  }).on("error", () => res.status(502).json({
+    title: "",
+    link: ""
+  }));
 });
 
-app.listen(PORT, () => console.log(`API running on ${PORT}`));
+app.listen(PORT, () => console.log("API online"));
