@@ -1,7 +1,9 @@
 const express = require("express");
+
 const app = express();
 const PORT = process.env.PORT || 10000;
 const TIMEZONE = "America/New_York";
+
 function makeTimestamps(unix) {
   return {
     short_time: `<t:${unix}:t>`,
@@ -21,6 +23,7 @@ app.get("/", (req, res) => {
     format: "MM/DD/YYYY/H:MM"
   });
 });
+
 app.get("/timestamp", (req, res) => {
   const input = Array.isArray(req.query.date)
     ? req.query.date[0]
@@ -29,10 +32,9 @@ app.get("/timestamp", (req, res) => {
   if (!input) {
     return res.status(400).json({
       status: "error",
-      error: "Missing date. Enter a date to generate timestamps.",
+      error: "Missing date. Pass the BotGhost option as ?date={option_date}.",
       expected_format: "MM/DD/YYYY/H:MM",
-      timezone: TIMEZONE,
-      timestamps: null
+      timezone: TIMEZONE
     });
   }
 
@@ -47,8 +49,7 @@ app.get("/timestamp", (req, res) => {
       input: cleanInput,
       error: "Invalid format. Use MM/DD/YYYY/H:MM.",
       expected_format: "MM/DD/YYYY/H:MM",
-      timezone: TIMEZONE,
-      timestamps: null
+      timezone: TIMEZONE
     });
   }
 
@@ -59,15 +60,16 @@ app.get("/timestamp", (req, res) => {
   const hour = Number(h);
   const minute = Number(min);
 
-  const calendarDate = new Date(0);
-  calendarDate.setUTCFullYear(year, month - 1, day);
+  const calendar = new Date(0);
+  calendar.setUTCFullYear(year, month - 1, day);
 
   if (
-    year < 1970 || month < 1 || month > 12 ||
+    year < 1970 || year > 9999 ||
+    month < 1 || month > 12 ||
     day < 1 || day > 31 ||
-    calendarDate.getUTCFullYear() !== year ||
-    calendarDate.getUTCMonth() !== month - 1 ||
-    calendarDate.getUTCDate() !== day ||
+    calendar.getUTCFullYear() !== year ||
+    calendar.getUTCMonth() !== month - 1 ||
+    calendar.getUTCDate() !== day ||
     hour < 0 || hour > 23 ||
     minute < 0 || minute > 59
   ) {
@@ -75,8 +77,7 @@ app.get("/timestamp", (req, res) => {
       status: "error",
       input: cleanInput,
       error: "Invalid date or time.",
-      timezone: TIMEZONE,
-      timestamps: null
+      timezone: TIMEZONE
     });
   }
 
@@ -90,7 +91,7 @@ app.get("/timestamp", (req, res) => {
     hourCycle: "h23"
   });
 
-  const toParts = ms => Object.fromEntries(
+  const partsAt = ms => Object.fromEntries(
     formatter.formatToParts(new Date(ms))
       .filter(p => p.type !== "literal")
       .map(p => [p.type, Number(p.value)])
@@ -107,32 +108,34 @@ app.get("/timestamp", (req, res) => {
   let candidate = target;
 
   for (let i = 0; i < 6; i++) {
-    const p = toParts(candidate);
+    const p = partsAt(candidate);
     const difference = target -
       asUTC(p.year, p.month, p.day, p.hour, p.minute);
+
     candidate += difference;
     if (difference === 0) break;
   }
 
-  const actual = toParts(candidate);
+  const actual = partsAt(candidate);
 
   if (
-    actual.year !== year || actual.month !== month ||
-    actual.day !== day || actual.hour !== hour ||
+    actual.year !== year ||
+    actual.month !== month ||
+    actual.day !== day ||
+    actual.hour !== hour ||
     actual.minute !== minute
   ) {
     return res.status(400).json({
       status: "error",
       input: cleanInput,
       error: "This local time may not exist because of daylight saving time.",
-      timezone: TIMEZONE,
-      timestamps: null
+      timezone: TIMEZONE
     });
   }
 
   const unix = Math.floor(candidate / 1000);
 
-  res.json({
+  return res.json({
     status: "ok",
     input: cleanInput,
     timezone: TIMEZONE,
