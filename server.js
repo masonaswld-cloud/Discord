@@ -110,11 +110,25 @@ app.get("/timestamp", (req, res) => {
 
   const unix = Math.floor(candidate / 1000);
 
+  // human-readable formatted date in the target timezone
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23"
+  });
+  const formatted_local = formatter.format(new Date(candidate));
+
   res.json({
     status: "ok",
     input,
     timezone: TIMEZONE,
     unix,
+    formatted_local,
+    iso_utc: new Date(candidate).toISOString(),
     timestamps: {
       short_time: `<t:${unix}:t>`,
       long_time: `<t:${unix}:T>`,

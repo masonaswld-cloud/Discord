@@ -58,15 +58,19 @@ function findEpochForLocal(year, month, day, hour, minute) {
 
 function convert(input) {
   const m = input.trim().match(
-    /^(\d{1,2})\/(\d{1,2})\/(\d{2})\/(\d{1,2}):(\d{2})$/
+    /^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})\/(\d{1,2}):(\d{2})$/
   );
 
   if (!m) {
-    throw Error("Use MM/DD/YY/H:MM, e.g. 12/25/23/5:30");
+    throw Error("Use MM/DD/YY or MM/DD/YYYY/H:MM, e.g. 12/25/23/5:30 or 12/25/2023/5:30");
   }
 
   const [, mo, da, yy, hh, mi] = m;
-  const month = +mo, day = +da, year = 2000 + +yy;
+  const month = +mo, day = +da;
+  let year = +yy;
+  if (yy.length === 2) {
+    year = 2000 + year;
+  }
   const hour = +hh, minute = +mi;
 
   if (month < 1 || month > 12 || hour > 23 || minute > 59 || day < 1 || day > 31) {
@@ -86,6 +90,18 @@ function convert(input) {
   const unix = Math.floor(epochMillis / 1000);
 
   console.log("\nUnix timestamp:", unix);
+  // human-readable formatted date in the target timezone
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23"
+  });
+  console.log("Formatted (America/New_York):", fmt.format(new Date(epochMillis)));
+  console.log("ISO (UTC):", new Date(epochMillis).toISOString());
   console.log("Short time:", `<t:${unix}:t>`);
   console.log("Long time:", `<t:${unix}:T>`);
   console.log("Short date:", `<t:${unix}:d>`);
@@ -94,7 +110,7 @@ function convert(input) {
   console.log("Relative:", `<t:${unix}:R>`);
 }
 
-rl.question("Enter date (MM/DD/YY/H:MM): ", input => {
+rl.question("Enter date (MM/DD/YY or MM/DD/YYYY/H:MM): ", input => {
   try {
     convert(input);
   } catch (e) {
