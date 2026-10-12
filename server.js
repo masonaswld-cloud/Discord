@@ -112,12 +112,12 @@ input,
 timezone: TIMEZONE,
 unix,
 timestamps: {
-short_time: "<t:${unix}:t>",
-long_time: "<t:${unix}:T>",
-short_date: "<t:${unix}:d>",
-long_date: "<t:${unix}:D>",
-full: "<t:${unix}:F>",
-relative: "<t:${unix}:R>"
+  short_time: `<t:${unix}:t>`,
+  long_time: `<t:${unix}:T>`,
+  short_date: `<t:${unix}:d>`,
+  long_date: `<t:${unix}:D>`,
+  full: `<t:${unix}:F>`,
+  relative: `<t:${unix}:R>`
 }
 });
 });
