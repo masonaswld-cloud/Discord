@@ -1,7 +1,35 @@
 const express = require("express");
+
 const app = express();
 const PORT = process.env.PORT || 10000;
 const TIMEZONE = "America/New_York";
+
+// Default example timestamp: October 12, 2026, 9:00 AM
+const EXAMPLE_UNIX = 1791810000;
+
+function makeTimestamps(unix) {
+  return {
+    short_time: `<t:${unix}:t>`,
+    long_time: `<t:${unix}:T>`,
+    short_date: `<t:${unix}:d>`,
+    long_date: `<t:${unix}:D>`,
+    full: `<t:${unix}:F>`,
+    relative: `<t:${unix}:R>`
+  };
+}
+
+function sendError(res, error, input = null, status = 400) {
+  res.status(status).json({
+    status: "error",
+    error,
+    input,
+    timezone: TIMEZONE,
+    expected_format: "MM/DD/YYYY/H:MM",
+    example: "10/12/2026/9:00",
+    unix: EXAMPLE_UNIX,
+    timestamps: makeTimestamps(EXAMPLE_UNIX)
+  });
+}
 
 app.get("/", (req, res) => {
   res.json({
@@ -9,7 +37,8 @@ app.get("/", (req, res) => {
     service: "Timestamp API",
     timezone: TIMEZONE,
     format: "MM/DD/YYYY/H:MM",
-    example: "/timestamp?date=10%2F12%2F2026%2F9%3A00"
+    example: "/timestamp?date=10%2F12%2F2026%2F9%3A00",
+    example_timestamps: makeTimestamps(EXAMPLE_UNIX)
   });
 });
 
@@ -19,25 +48,21 @@ app.get("/timestamp", (req, res) => {
     : req.query.date;
 
   if (!input) {
-    return res.status(400).json({
-      status: "error",
-      error: "Missing date.",
-      expected_format: "MM/DD/YYYY/H:MM",
-      example: "10/12/2026/9:00"
-    });
+    return sendError(res, "Missing date. Showing example timestamps.");
   }
 
-  const match = String(input).trim().match(
+  const cleanInput = String(input).trim();
+
+  const match = cleanInput.match(
     /^(\d{1,2})\/(\d{1,2})\/(\d{4})\/(\d{1,2}):(\d{2})$/
   );
 
   if (!match) {
-    return res.status(400).json({
-      status: "error",
-      input,
-      error: "Invalid format. Use MM/DD/YYYY/H:MM.",
-      example: "10/12/2026/9:00"
-    });
+    return sendError(
+      res,
+      "Invalid format. Use MM/DD/YYYY/H:MM.",
+      cleanInput
+    );
   }
 
   const [, m, d, y, h, min] = match;
@@ -54,11 +79,7 @@ app.get("/timestamp", (req, res) => {
     hour < 0 || hour > 23 ||
     minute < 0 || minute > 59
   ) {
-    return res.status(400).json({
-      status: "error",
-      input,
-      error: "Invalid date or time."
-    });
+    return sendError(res, "Invalid date or time.", cleanInput);
   }
 
   const calendarDate = new Date(Date.UTC(year, month - 1, day));
@@ -68,11 +89,7 @@ app.get("/timestamp", (req, res) => {
     calendarDate.getUTCMonth() !== month - 1 ||
     calendarDate.getUTCDate() !== day
   ) {
-    return res.status(400).json({
-      status: "error",
-      input,
-      error: "Invalid calendar date."
-    });
+    return sendError(res, "Invalid calendar date.", cleanInput);
   }
 
   const formatter = new Intl.DateTimeFormat("en-US", {
@@ -85,14 +102,11 @@ app.get("/timestamp", (req, res) => {
     hourCycle: "h23"
   });
 
-  const toParts = (ms) => {
-    const parts = formatter.formatToParts(new Date(ms));
-    return Object.fromEntries(
-      parts
-        .filter(part => part.type !== "literal")
-        .map(part => [part.type, Number(part.value)])
-    );
-  };
+  const toParts = (ms) => Object.fromEntries(
+    formatter.formatToParts(new Date(ms))
+      .filter(p => p.type !== "literal")
+      .map(p => [p.type, Number(p.value)])
+  );
 
   const asUTC = (yy, mm, dd, hh, mi) => {
     const date = new Date(0);
@@ -111,7 +125,6 @@ app.get("/timestamp", (req, res) => {
     );
 
     candidate += difference;
-
     if (difference === 0) break;
   }
 
@@ -124,28 +137,21 @@ app.get("/timestamp", (req, res) => {
     actual.hour !== hour ||
     actual.minute !== minute
   ) {
-    return res.status(400).json({
-      status: "error",
-      input,
-      error: "This local time may not exist because of daylight saving time."
-    });
+    return sendError(
+      res,
+      "This local time may not exist because of daylight saving time.",
+      cleanInput
+    );
   }
 
   const unix = Math.floor(candidate / 1000);
 
   res.json({
     status: "ok",
-    input: String(input).trim(),
+    input: cleanInput,
     timezone: TIMEZONE,
     unix,
-    timestamps: {
-      short_time: `<t:${unix}:t>`,
-      long_time: `<t:${unix}:T>`,
-      short_date: `<t:${unix}:d>`,
-      long_date: `<t:${unix}:D>`,
-      full: `<t:${unix}:F>`,
-      relative: `<t:${unix}:R>`
-    }
+    timestamps: makeTimestamps(unix)
   });
 });
 
