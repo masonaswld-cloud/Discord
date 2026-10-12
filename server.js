@@ -38,6 +38,8 @@ app.get("/timestamp", (req, res) => {
   const hour = Number(h);
   const minute = Number(min);
 
+  const option_date = `${month.toString().padStart(2, "0")}/${day.toString().padStart(2, "0")}/${year}/${hour.toString()}:${minute.toString().padStart(2, "0")}`;
+
   if (
     year < 1970 || year > 9999 ||
     month < 1 || month > 12 ||
@@ -110,7 +112,6 @@ app.get("/timestamp", (req, res) => {
 
   const unix = Math.floor(candidate / 1000);
 
-  // human-readable formatted date in the target timezone
   const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone: TIMEZONE,
     year: "numeric",
@@ -125,6 +126,7 @@ app.get("/timestamp", (req, res) => {
   res.json({
     status: "ok",
     input,
+    option_date,
     timezone: TIMEZONE,
     unix,
     formatted_local,
@@ -143,3 +145,4 @@ app.get("/timestamp", (req, res) => {
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Timestamp API running on port ${PORT}`);
 });
+

@@ -68,8 +68,10 @@ function convert(input) {
   const [, mo, da, yy, hh, mi] = m;
   const month = +mo, day = +da;
   let year = +yy;
+  let optionDate = `${month.toString().padStart(2, "0")}/${day.toString().padStart(2, "0")}/${yy}/${hh}:${mi}`;
   if (yy.length === 2) {
     year = 2000 + year;
+    optionDate = `${month.toString().padStart(2, "0")}/${day.toString().padStart(2, "0")}/${year}/${hh}:${mi}`;
   }
   const hour = +hh, minute = +mi;
 
@@ -89,8 +91,8 @@ function convert(input) {
   const epochMillis = findEpochForLocal(year, month, day, hour, minute);
   const unix = Math.floor(epochMillis / 1000);
 
-  console.log("\nUnix timestamp:", unix);
-  // human-readable formatted date in the target timezone
+  console.log("\nSelected date:", optionDate);
+  console.log("Unix timestamp:", unix);
   const fmt = new Intl.DateTimeFormat("en-US", {
     timeZone: TIME_ZONE,
     year: "numeric",
@@ -118,3 +120,4 @@ rl.question("Enter date (MM/DD/YY or MM/DD/YYYY/H:MM): ", input => {
   }
   rl.close();
 });
+
