@@ -22,7 +22,7 @@ error: "Missing date. Use /timestamp?date=10%2F12%2F2026%2F9%3A00"
 }
 
 const match = String(input).match(
-/^(\d{1,2})/(\d{1,2})/(\d{4})/(\d{1,2}):(\d{2})$/
+//^(\d{1,2})\/(\d{1,2})\/(\d{4})\/(\d{1,2}):(\d{2})$//
 );
 
 if (!match) {
