@@ -1,4 +1,4 @@
-{
+<escape>{
 "name": "timestamp-api",
 "version": "1.0.0",
 "description": "Discord timestamp API for BotGhost",
@@ -9,3 +9,4 @@
 "dependencies": {
 "express": "^5.1.0"
 }
+}</escape>
